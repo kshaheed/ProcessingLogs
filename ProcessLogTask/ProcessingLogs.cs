@@ -35,7 +35,8 @@ namespace ProcessLogTask
 		}
 		public async Task ProcessFile(string filePath)
 		{
-		
+			//I have tried MemoryMappedFile but took longer so I thought about to make it CQRS better
+
 			using (Task t1 = Task.Run(() =>
 			{
 				using (var reader = File.OpenText(filePath))
