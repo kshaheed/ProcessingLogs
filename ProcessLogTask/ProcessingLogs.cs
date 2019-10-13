@@ -35,10 +35,6 @@ namespace ProcessLogTask
 		}
 		public async Task ProcessFile(string filePath)
 		{
-			if (string.IsNullOrEmpty(filePath))
-			{
-				return;
-			}
 		
 			using (Task t1 = Task.Run(() =>
 			{
@@ -46,8 +42,13 @@ namespace ProcessLogTask
 				{
 					string currentLine;
 					var line = 1;
+
+					#region Update UI with lines count
+					ReadingLinesCount();
+					#endregion
+
 					var total = File.ReadLines(filePath).Count();
-				
+
 					while ((currentLine = reader.ReadLine()) != null)
 					{
 						//adding to BlockingCollection
@@ -63,7 +64,7 @@ namespace ProcessLogTask
 
 						line++;
 					}
-				
+
 				}
 				mainList.CompleteAdding();
 			}))
@@ -95,6 +96,15 @@ namespace ProcessLogTask
 					Console.WriteLine("That's All!");
 				}
 			}
+		}
+
+		private static void ReadingLinesCount()
+		{
+			Task readinglinesCount = Task.Run(() =>
+			{
+				Console.WriteLine(new StringBuilder().AppendFormat("Reading lines count"));
+			});
+			readinglinesCount.Wait();
 		}
 
 		public void Consumer(LiteCollection<Target> col)
