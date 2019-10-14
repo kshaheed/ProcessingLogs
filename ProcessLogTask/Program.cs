@@ -14,11 +14,14 @@ namespace ProcessLogTask
 			{
 				Console.WriteLine("File name is empty");
 			}
+			 processingLogs.DeleteDBFileAsync();
 
-			await processingLogs.ProcessFile(fileName);
+			await processingLogs.ProcessFileAsync(fileName);
 
 			Console.WriteLine("Press any key to exit.");
 			Console.ReadKey();
 		}
+
+		
 	}
 }

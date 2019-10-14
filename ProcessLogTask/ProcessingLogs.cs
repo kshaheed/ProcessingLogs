@@ -12,28 +12,16 @@ using System.Threading;
 using System.Threading.Tasks;
 namespace ProcessLogTask
 {
-	public class ProcessingLogs: IProcessingLogs
+	public class ProcessingLogs : IProcessingLogs
 	{
 
+		#region Members
 		static BlockingCollection<Log> mainList = new BlockingCollection<Log>();
 		static BlockingCollection<Target> dbTargets = new BlockingCollection<Target>();
-		static bool stopedReading = false;
-		static LiteCollection<Target> col;
-		
-		public void FillListData(string line)
-		{
-			if (!string.IsNullOrEmpty(line))
-			{
-				var logObj = JsonConvert.DeserializeObject<Log>(line.ToString());
+		#endregion
 
-				if (logObj != null && !string.IsNullOrEmpty(logObj.Id))
-				{
-
-					mainList.Add(logObj);
-				}
-			}
-		}
-		public async Task ProcessFile(string filePath)
+		#region Functions
+		public async Task ProcessFileAsync(string filePath)
 		{
 			//I have tried MemoryMappedFile but took longer so I thought about to make it CQRS better
 
@@ -73,7 +61,7 @@ namespace ProcessLogTask
 				// Spin up a Task to consume the BlockingCollection mainList
 				try
 				{
-					using (var db = new LiteDatabase("mydb.db"))
+					using (var db = new LiteDatabase("Logs.db"))
 					{
 						var col = db.GetCollection<Target>("target");
 						// Consume consume the BlockingCollection
@@ -114,13 +102,9 @@ namespace ProcessLogTask
 
 			if (item == null)
 			{
-				stopedReading = true;
 				return;
 			}
-			else
-			{
-				stopedReading = false;
-			}
+			
 			var duration = 0;
 			//IdentifyObjects start and finish objects
 			Log startedLog, finishedLog;
@@ -128,7 +112,7 @@ namespace ProcessLogTask
 
 			if (startedLog != null && finishedLog != null)
 			{
-				
+
 				#region Cast timestamp and calculate duration
 				if (Double.TryParse(startedLog.Timestamp.ToString(), out double startTimestamp) &&
 								Double.TryParse(finishedLog.Timestamp.ToString(), out double endTimestamp))
@@ -138,7 +122,7 @@ namespace ProcessLogTask
 					{
 						item.Alert = true;
 					}
-				} 
+				}
 				#endregion
 
 				//Add object To DB
@@ -150,7 +134,7 @@ namespace ProcessLogTask
 						Console.WriteLine(new StringBuilder().AppendFormat("Adding Id # {0} to Database Thread {1}", item.Id,
 							Thread.CurrentThread.ManagedThreadId));
 					});
-				addingToDBTask.Wait(); 
+				addingToDBTask.Wait();
 				#endregion
 			}
 		}
@@ -186,11 +170,32 @@ namespace ProcessLogTask
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Exception while adding to DB "+ ex.Message);
+				Console.WriteLine("Exception while adding to DB " + ex.Message);
 			}
 
 			return res;
 		}
+
+		public  void  DeleteDBFileAsync()
+		{
+			try
+			{
+				// Check if file exists with its full path    
+				if (System.IO.File.Exists("Logs.db"))
+				{
+					// If file found, delete it    
+					System.IO.File.Delete("Logs.db");
+				}
+				else Console.WriteLine("File not found");
+				}
+			catch (IOException ioExp)
+			{
+				Console.WriteLine(ioExp.Message);
+			}
+		}
+		#endregion
+
+		#region Helpers
 		public int CalculatDuration(double startTimestamp, double endTimestamp)
 		{
 			int duration = (int)(startTimestamp - endTimestamp);
@@ -198,8 +203,23 @@ namespace ProcessLogTask
 			duration = duration < 0 ? duration * -1 : duration;
 			return duration;
 		}
+		public void FillListData(string line)
+		{
+			if (!string.IsNullOrEmpty(line))
+			{
+				var logObj = JsonConvert.DeserializeObject<Log>(line.ToString());
 
-		
+				if (logObj != null && !string.IsNullOrEmpty(logObj.Id))
+				{
+
+					mainList.Add(logObj);
+				}
+			}
+		}
+		#endregion
+
+
+
 	}
 
 }

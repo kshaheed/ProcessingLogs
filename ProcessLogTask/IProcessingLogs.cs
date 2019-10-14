@@ -13,7 +13,8 @@ namespace ProcessLogTask
 		int CalculatDuration(double startTimestamp, double endTimestamp);
 		void Consumer(LiteCollection<Target> col);
 		void FillListData(string line);
-		Task ProcessFile(string filePath);
+		Task ProcessFileAsync(string filePath);
 		bool AddToDB(LiteCollection<Target> col, Log item, int duration);
+		void DeleteDBFileAsync();
 	}
 }
